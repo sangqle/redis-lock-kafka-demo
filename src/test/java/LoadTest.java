@@ -13,7 +13,7 @@ public class LoadTest {
         HttpClient client = HttpClient.newHttpClient();
 
         for (int i = 0; i < numberOfRequests; i++) {
-            final int id = i;
+            final int id = 1001;
             executor.submit(() -> {
                 String requestId = "req-" + id;
                 String url = "http://localhost:8088/api/data/update?requestId=" + requestId + "&delta=1";
