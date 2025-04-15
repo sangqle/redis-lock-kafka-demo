@@ -13,30 +13,33 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"  # Exposed as localhost:9092
+      - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # Listen on all interfaces inside the container.
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      # Advertise using the host address (here "localhost") with port mapping.
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      # Advertised listeners: sử dụng hostname của container cho nội bộ,
+      # và external listener sử dụng HOST_IP (có thể đặt trong file .env)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://${HOST_IP}:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
     networks:
       - common-net
-
+#
   kafka2:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
     ports:
-      - "9093:9092"  # Exposed as localhost:9093
+      - "9093:9092"
+      - "29093:29092"
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      # Advertise with host port 9093.
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092,PLAINTEXT_HOST://${HOST_IP}:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
     networks:
       - common-net
@@ -45,14 +48,14 @@ services:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
-    ports:
-      - "9094:9092"  # Exposed as localhost:9094
+      - "9094:9092"
+      - "29094:29092"
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      # Advertise with host port 9094.
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092,PLAINTEXT_HOST://${HOST_IP}:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
     networks:
       - common-net
@@ -71,8 +74,9 @@ services:
       - "8080:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      # Bootstrap servers now use the external addresses for each broker.
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=localhost:9092,localhost:9093,localhost:9094
+      # Vì Kafka-UI đang chạy trong cùng một mạng Docker,
+      # sử dụng các hostname container với cổng nội bộ (9092)
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka1:9092,kafka2:9092,kafka3:9092
     depends_on:
       - kafka1
       - kafka2
