@@ -13,30 +13,33 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
-      - "29092:29092"
+      - "9092:9092"      # Internal port exposed (used by containers)
+      - "29092:29092"    # External port mapping for host clients
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # Advertised listeners: sử dụng hostname của container cho nội bộ,
-      # và external listener sử dụng HOST_IP (có thể đặt trong file .env)
+      # Set both internal and external listeners:
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      # Internal listener uses the container name; external uses the HOST_IP
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://${HOST_IP}:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
     networks:
       - common-net
-#
+
   kafka2:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
     ports:
-      - "9093:9092"
-      - "29093:29092"
+      - "9093:9092"      # Internal: kafka container listens on 9092 mapped to host port 9093
+      - "29093:29092"    # External
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      # Advertise internal container name and external HOST_IP with the proper port mapping.
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092,PLAINTEXT_HOST://${HOST_IP}:29093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -48,11 +51,13 @@ services:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
-      - "9094:9092"
-      - "29094:29092"
+    ports:
+      - "9094:9092"      # Internal mapping for container-to-container comms
+      - "29094:29092"    # External mapping
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092,PLAINTEXT_HOST://${HOST_IP}:29094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -74,8 +79,7 @@ services:
       - "8080:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      # Vì Kafka-UI đang chạy trong cùng một mạng Docker,
-      # sử dụng các hostname container với cổng nội bộ (9092)
+      # Since Kafka-UI runs within the same Docker network, use internal hostnames and ports.
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka1:9092,kafka2:9092,kafka3:9092
     depends_on:
       - kafka1
