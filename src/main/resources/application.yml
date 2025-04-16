@@ -1,7 +1,7 @@
 spring:
   redis:
     host: localhost
-    port: 6379
+    port: 6378
 
   kafka:
     bootstrap-servers: localhost:29092
@@ -12,3 +12,6 @@ spring:
       group-id: my-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      partition-assignment-strategy: org.apache.kafka.clients.consumer.RoundRobinAssignor
+
+
