@@ -9,7 +9,7 @@ public class KafkaProducerController {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     // The topic to send messages to
-    private final String TOPIC = "demo-topic";
+    private final String TOPIC = "cabin-test-1";
 
     public KafkaProducerController(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
